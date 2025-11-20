@@ -117,11 +117,13 @@ export default function ChatInterface() {
     }
   };
 
+  // --- FIXED: Only submit on Ctrl+Enter or Cmd+Enter ---
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       handleShorten(e);
     }
+    // Plain 'Enter' will now do its default behavior (new line)
   };
 
   // Helper to determine if we have an alias error
@@ -144,7 +146,7 @@ export default function ChatInterface() {
 
       {/* Main Chat Area */}
       <main className={`flex-1 overflow-y-auto pt-20 pb-40 px-4 scrollbar-hide bg-black 
-                      ${messages.length === 0 ? "bg-[url('/hero-background.png')] bg-no-repeat bg-center" : ""}
+                      ${messages.length === 0 ? "bg-no-repeat bg-center" : ""}
                       ${messages.length === 0 ? "bg-[length:800px_auto] md:bg-[length:1000px_auto]" : ""} 
                       transition-all duration-500`}
       > 
