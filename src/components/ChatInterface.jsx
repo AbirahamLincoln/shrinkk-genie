@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Loader2, Sparkles, Scissors, Settings2, Globe, Link as LinkIcon } from 'lucide-react';
+import { ArrowUp, Loader2, Sparkles, Scissors, Settings2, Globe, Link as LinkIcon, Plus } from 'lucide-react';
 import MessageItem from './MessageItem';
 import { shortenUrl } from '@/services/api'; 
-
+import logo from '../../public/logo.png';
+import Image from 'next/image';
 export default function ChatInterface() {
   const [inputUrl, setInputUrl] = useState('');
   const [customDomain, setCustomDomain] = useState('');
@@ -28,17 +29,23 @@ export default function ChatInterface() {
     }
   }, [inputUrl]);
 
+  // Reset / New Chat Handler
+  const handleNewChat = () => {
+    setMessages([]);
+    setInputUrl('');
+    setCustomDomain('');
+    setCustomAlias('');
+    setShowOptions(false);
+  };
+
   const handleShorten = async (e) => {
     e.preventDefault();
     if (!inputUrl.trim() || loading) return;
 
-    // 1. Parse Input (Check for multiple URLs)
-    // Split by newline, comma, or space, then filter empty strings
     const rawUrls = inputUrl.split(/[\n, ]+/).map(u => u.trim()).filter(u => u.length > 0);
     
     if (rawUrls.length === 0) return;
 
-    // Prepend https:// if missing
     const processedUrls = rawUrls.map(url => {
       if (!/^https?:\/\//i.test(url)) return 'https://' + url;
       return url;
@@ -54,31 +61,27 @@ export default function ChatInterface() {
     setLoading(true);
 
     try {
-      // 2. Call API
       const result = await shortenUrl(
         isBulk ? processedUrls : processedUrls[0], 
         customDomain, 
         customAlias
       );
 
-      // 3. Update State based on result type
       const newMessages = [];
       const now = new Date();
 
       if (isBulk) {
-        // Result is an array: [{ shortUrl, longUrl, id }, ...]
         result.forEach(item => {
           newMessages.push({
-            id: Date.now() + Math.random(), // Unique ID
+            id: Date.now() + Math.random(),
             longUrl: item.longUrl,
             shortUrl: item.shortUrl,
             customDomain: customDomain,
-            customAlias: null, // Alias ignored in bulk
+            customAlias: null,
             createdAt: now,
           });
         });
       } else {
-        // Result is single object: { shortUrl, id }
         newMessages.push({
           id: Date.now(),
           longUrl: processedUrls[0],
@@ -94,7 +97,6 @@ export default function ChatInterface() {
       setCustomAlias('');
       setShowOptions(false); 
       
-      // Reset textarea height
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
@@ -115,23 +117,37 @@ export default function ChatInterface() {
 
   return (
     <div className="flex flex-col h-screen bg-black text-gray-100 font-sans overflow-hidden selection:bg-indigo-500/30">
+      
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 h-14 flex items-center justify-between px-6 bg-black/80 backdrop-blur-md z-10 border-b border-white/5">
-        <div className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity cursor-default">
-          <Scissors size={18} className="text-gray-400" />
+        <div 
+          onClick={handleNewChat} 
+          className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
+          title="Reset / New Chat"
+        >
+          <Scissors size={20} className="text-gray-400" />
           <span className="font-bold tracking-tight text-sm">Shrinkk</span>
         </div>
+        
+        {/* Removed the New Chat button from header as it is now in the input bar */}
       </header>
 
       {/* Main Chat Area */}
       <main className="flex-1 overflow-y-auto pt-20 pb-40 px-4 scrollbar-hide">
         {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center -mt-20 animate-in fade-in zoom-in duration-700">
-            <h1 className="text-7xl md:text-9xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-600 select-none">
+          <div className="h-full flex flex-col items-center justify-center animate-in fade-in zoom-in duration-700">
+            {/* <h1 className="text-7xl md:text-9xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-600 select-none">
               Shrinkk
-            </h1>
+            </h1> */}
+            <Image
+                  src={logo}
+                  width={700}
+                  height={200}
+                  alt="scissor Logo"
+                  className="flex-shrink-0" 
+                />
             <p className="text-gray-500 text-lg font-medium tracking-wide mt-6 text-center px-4">
-              Paste one or more URLs to get started
+              Type or Paste one or more URLs to shorten
             </p>
           </div>
         )}
@@ -186,6 +202,17 @@ export default function ChatInterface() {
              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-2xl blur-sm opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
             <div className="relative bg-[#111] border border-gray-800 group-focus-within:border-gray-600 rounded-2xl shadow-2xl flex items-end p-2 transition-all duration-300">
               
+              {/* --- NEW: New Chat Button (Left of Text Area) --- */}
+              <button
+                type="button"
+                onClick={handleNewChat}
+                className="p-2 rounded-xl transition-colors mr-1 mb-1 text-gray-500 hover:text-white hover:bg-gray-900"
+                title="New Chat"
+              >
+                <Plus size={20} />
+              </button>
+
+              {/* Settings Button */}
               <button
                 type="button"
                 onClick={() => setShowOptions(!showOptions)}
@@ -199,14 +226,13 @@ export default function ChatInterface() {
                 {loading ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} />}
               </div>
               
-              {/* Textarea for Multi-line support */}
               <textarea
                 ref={textareaRef}
                 value={inputUrl}
                 onChange={(e) => setInputUrl(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Paste URLs (one per line)..."
-                className="w-full bg-transparent border-none text-white text-lg placeholder:text-gray-600 px-2 py-3 focus:ring-0 focus:outline-none resize-none max-h-48 scrollbar-hide"
+                placeholder="Type or Paste URLs (one per line)..."
+                className="w-full bg-transparent border-none whitespace-nowrap text-nowrap text-[12px] sm:text-4 text-white text-lg placeholder:text-gray-600 px-2 py-3 focus:ring-0 focus:outline-none resize-none scrollbar-hide"
                 rows={1}
                 disabled={loading}
                 autoFocus

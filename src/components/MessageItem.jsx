@@ -75,9 +75,9 @@ export default function MessageItem({ item, isNew }) {
           />
 
           <div className="flex flex-col gap-2">
-            <div className="text-sm text-gray-400 font-medium">Shrinkk AI</div>
+            <div className="text-sm text-gray-400 font-medium">Shrinkk Genie</div>
 
-            <div className="bg-black border border-gray-800 rounded-xl p-4 w-full sm:w-96 shadow-2xl shadow-black/50">
+            <div className="bg-black border border-gray-800 rounded-xl p-4 w-full shadow-2xl shadow-black/50">
               {/* Header */}
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div className="flex items-center gap-2 overflow-hidden">
