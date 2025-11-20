@@ -65,17 +65,17 @@ export default function MessageItem({ item, isNew }) {
 
       {/* System Response */}
       <div className="flex justify-start">
-        <div className="flex gap-4 max-w-[90%]">
+        <div className="flex gap-4 max-w-[90%] w-full">
           <Image
             src={ic}
             width={32}
             height={32}
             alt="Shrinkk Logo"
-            className="flex-shrink-0" 
+            className="flex-shrink-0 self-start mt-1" 
           />
 
-          <div className="flex flex-col gap-2">
-            <div className="text-sm text-gray-400 font-medium">Shrinkk Genie</div>
+          <div className="flex flex-col gap-2 w-full min-w-0">
+            <div className="text-sm text-gray-400 font-medium">Shrinkk AI</div>
 
             <div className="bg-black border border-gray-800 rounded-xl p-4 w-full shadow-2xl shadow-black/50">
               {/* Header */}
@@ -84,35 +84,46 @@ export default function MessageItem({ item, isNew }) {
                   <Globe size={14} className="text-gray-500 flex-shrink-0" />
                   <span className="text-xs text-gray-500 truncate uppercase tracking-wider font-semibold">Generated Link</span>
                 </div>
-                {isNew && <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full border border-green-500/20">New</span>}
+                {isNew && <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full border border-green-500/20 flex-shrink-0">New</span>}
               </div>
 
               {/* Display Input Metadata (Domain/Alias) if used */}
               {(item.customDomain || item.customAlias) && (
                 <div className="flex flex-wrap gap-2 mb-3">
                   {item.customDomain && (
-                    <div className="flex items-center gap-1 text-[10px] bg-[#1a1a1a] text-gray-400 px-2 py-1 rounded border border-gray-800">
-                      <Globe size={10} />
-                      <span className="truncate max-w-[120px]">{item.customDomain}</span>
+                    <div className="flex items-center gap-1 text-[10px] bg-[#1a1a1a] text-gray-400 px-2 py-1 rounded border border-gray-800 max-w-full">
+                      <Globe size={10} className="flex-shrink-0" />
+                      <span className="truncate">{item.customDomain}</span>
                     </div>
                   )}
                   {item.customAlias && (
-                    <div className="flex items-center gap-1 text-[10px] bg-[#1a1a1a] text-gray-400 px-2 py-1 rounded border border-gray-800">
-                      <LinkIcon size={10} />
-                      <span className="truncate max-w-[100px]">/{item.customAlias}</span>
+                    <div className="flex items-center gap-1 text-[10px] bg-[#1a1a1a] text-gray-400 px-2 py-1 rounded border border-gray-800 max-w-full">
+                      <LinkIcon size={10} className="flex-shrink-0" />
+                      <span className="truncate">/{item.customAlias}</span>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Link Box */}
-              <div className="flex items-center gap-2 bg-[#111] rounded-lg p-1 pl-3 border border-gray-800 group hover:border-gray-700 transition-colors mb-4">
-                <a href={item.shortUrl} target="_blank" rel="noreferrer" className="flex-1 text-indigo-400 hover:text-indigo-300 font-mono text-sm truncate py-2 transition-colors">
+              {/* Link Box - FIXED LAYOUT HERE */}
+              <div className="flex items-center bg-[#111] rounded-lg border border-gray-800 group hover:border-gray-700 transition-colors mb-4 w-full overflow-hidden">
+                <a 
+                  href={item.shortUrl} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="flex-1 text-indigo-400 hover:text-indigo-300 font-mono text-sm truncate py-3 pl-4 min-w-0"
+                >
                   {item.shortUrl}
                 </a>
-                <button onClick={copyToClipboard} className="p-2 hover:bg-gray-800 rounded-md text-gray-400 hover:text-white transition-all" title="Copy to clipboard">
-                  {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
-                </button>
+                <div className="border-l border-gray-800 h-full flex items-center">
+                   <button 
+                    onClick={copyToClipboard} 
+                    className="p-3 hover:bg-gray-800 text-gray-400 hover:text-white transition-all h-full flex items-center justify-center" 
+                    title="Copy to clipboard"
+                  >
+                    {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
+                  </button>
+                </div>
               </div>
 
               {/* Social Share Buttons */}

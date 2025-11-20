@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Loader2, Sparkles, Scissors, Settings2, Globe, Link as LinkIcon, Plus } from 'lucide-react';
+import { ArrowUp, Loader2, Sparkles, Scissors, Settings2, Globe, Link as LinkIcon, Plus, AlertCircle } from 'lucide-react';
 import MessageItem from './MessageItem';
 import { shortenUrl } from '@/services/api'; 
 import logo from '../../public/logo.png';
@@ -13,15 +13,15 @@ export default function ChatInterface() {
   const [showOptions, setShowOptions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [error, setError] = useState(''); 
+
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -29,18 +29,19 @@ export default function ChatInterface() {
     }
   }, [inputUrl]);
 
-  // Reset / New Chat Handler
   const handleNewChat = () => {
     setMessages([]);
     setInputUrl('');
     setCustomDomain('');
     setCustomAlias('');
+    setError('');
     setShowOptions(false);
   };
 
   const handleShorten = async (e) => {
     e.preventDefault();
     if (!inputUrl.trim() || loading) return;
+    setError(''); 
 
     const rawUrls = inputUrl.split(/[\n, ]+/).map(u => u.trim()).filter(u => u.length > 0);
     
@@ -54,7 +55,7 @@ export default function ChatInterface() {
     const isBulk = processedUrls.length > 1;
 
     if (isBulk && customAlias) {
-      alert("Custom aliases cannot be used when shortening multiple URLs at once.");
+      setError("Custom aliases cannot be used when shortening multiple URLs.");
       return;
     }
 
@@ -102,7 +103,15 @@ export default function ChatInterface() {
       }
 
     } catch (err) {
-      alert("Failed to shorten URL. " + err.message);
+      let msg = "An unexpected error occurred.";
+      if (typeof err === 'string') {
+          msg = err;
+      } else if (err instanceof Error) {
+          msg = err.message;
+      } else if (err && typeof err === 'object' && err.message) {
+          msg = String(err.message);
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -115,6 +124,9 @@ export default function ChatInterface() {
     }
   };
 
+  // Helper to determine if we have an alias error
+  const isAliasError = error && error.toLowerCase().includes('alias');
+
   return (
     <div className="flex flex-col h-screen bg-black text-gray-100 font-sans overflow-hidden selection:bg-indigo-500/30">
       
@@ -125,20 +137,19 @@ export default function ChatInterface() {
           className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
           title="Reset / New Chat"
         >
-          <Scissors size={20} className="text-gray-400" />
+          <Scissors size={18} className="text-gray-400" />
           <span className="font-bold tracking-tight text-sm">Shrinkk</span>
         </div>
-        
-        {/* Removed the New Chat button from header as it is now in the input bar */}
       </header>
 
       {/* Main Chat Area */}
-      <main className="flex-1 overflow-y-auto pt-20 pb-40 px-4 scrollbar-hide">
+      <main className={`flex-1 overflow-y-auto pt-20 pb-40 px-4 scrollbar-hide bg-black 
+                      ${messages.length === 0 ? "bg-[url('/hero-background.png')] bg-no-repeat bg-center" : ""}
+                      ${messages.length === 0 ? "bg-[length:800px_auto] md:bg-[length:1000px_auto]" : ""} 
+                      transition-all duration-500`}
+      > 
         {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center animate-in fade-in zoom-in duration-700">
-            {/* <h1 className="text-7xl md:text-9xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-600 select-none">
-              Shrinkk
-            </h1> */}
+          <div className="h-full flex flex-col items-center justify-center animate-in fade-in zoom-in duration-700 pb-[60px]">
             <Image
                   src={logo}
                   width={700}
@@ -146,7 +157,7 @@ export default function ChatInterface() {
                   alt="scissor Logo"
                   className="flex-shrink-0" 
                 />
-            <p className="text-gray-500 text-lg font-medium tracking-wide mt-6 text-center px-4">
+             <p className="text-gray-400 text-lg font-medium tracking-wide mt-4 text-center px-4 opacity-80">
               Type or Paste one or more URLs to shorten
             </p>
           </div>
@@ -161,6 +172,7 @@ export default function ChatInterface() {
       {/* Input Area */}
       <div className="fixed bottom-0 left-0 right-0 p-4 md:p-8 bg-gradient-to-t from-black via-black to-transparent z-20">
         <div className="max-w-3xl mx-auto">
+          
           <form onSubmit={handleShorten} className="relative group">
             
              {/* Advanced Options Panel */}
@@ -183,15 +195,29 @@ export default function ChatInterface() {
                     <label className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-1.5 ml-1">
                       <LinkIcon size={12} /> Custom Alias
                     </label>
-                    <div className="flex items-center">
+                    <div className="relative flex items-center">
                       <span className="text-gray-600 text-sm mr-1">/</span>
                       <input 
                         type="text" 
                         value={customAlias}
-                        onChange={(e) => setCustomAlias(e.target.value)}
+                        onChange={(e) => {
+                          setCustomAlias(e.target.value);
+                          setError(''); 
+                        }}
                         placeholder="Single URL only"
-                        className="w-full bg-black/50 border border-gray-800 rounded-lg px-3 py-2 text-sm text-gray-300 placeholder:text-gray-700 focus:outline-none focus:border-indigo-500/50 transition-colors"
+                        className={`w-full bg-black/50 border rounded-lg px-3 py-2 text-sm text-gray-300 placeholder:text-gray-700 focus:outline-none transition-colors ${
+                          isAliasError 
+                            ? 'border-red-500/50 focus:border-red-500 text-red-200 pr-24'
+                            : 'border-gray-800 focus:border-indigo-500/50'
+                        }`}
                       />
+                      
+                      {/* Inline Error Message */}
+                      {isAliasError && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-red-500 font-bold animate-pulse pointer-events-none">
+                          Already exists
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -200,13 +226,13 @@ export default function ChatInterface() {
 
             {/* Main Input Bar */}
              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-2xl blur-sm opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
-            <div className="relative bg-[#111] border border-gray-800 group-focus-within:border-gray-600 rounded-2xl shadow-2xl flex items-end transition-all duration-300">
+            <div className={`relative bg-[#111] border group-focus-within:border-gray-600 rounded-2xl shadow-2xl flex items-center p-2 gap-1 transition-all duration-300 ${error && !isAliasError ? 'border-red-900/80 shadow-red-900/20' : 'border-gray-800'}`}>
               
-              {/* --- NEW: New Chat Button (Left of Text Area) --- */}
+              {/* New Chat Button */}
               <button
                 type="button"
                 onClick={handleNewChat}
-                className="p-2 rounded-xl transition-colors mr-1 mb-1 text-gray-500 hover:text-white hover:bg-gray-900"
+                className="p-2 rounded-xl transition-colors text-gray-500 hover:text-white hover:bg-gray-900"
                 title="New Chat"
               >
                 <Plus size={20} />
@@ -216,23 +242,26 @@ export default function ChatInterface() {
               <button
                 type="button"
                 onClick={() => setShowOptions(!showOptions)}
-                className={`p-2 rounded-xl transition-colors mr-1 mb-1 ${showOptions ? 'bg-gray-800 text-indigo-400' : 'text-gray-500 hover:text-gray-300 hover:bg-gray-900'}`}
+                className={`p-2 rounded-xl transition-colors ${showOptions ? 'bg-gray-800 text-indigo-400' : 'text-gray-500 hover:text-gray-300 hover:bg-gray-900'}`}
                 title="Advanced Options"
               >
                 <Settings2 size={20} />
               </button>
 
-              <div className="text-gray-500 group-focus-within:text-gray-300 transition-colors px-2 mb-3">
+              <div className="text-gray-500 group-focus-within:text-gray-300 transition-colors pl-1">
                 {loading ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} />}
               </div>
               
               <textarea
                 ref={textareaRef}
                 value={inputUrl}
-                onChange={(e) => setInputUrl(e.target.value)}
+                onChange={(e) => {
+                  setInputUrl(e.target.value);
+                  if (!isAliasError) setError(''); 
+                }}
                 onKeyDown={handleKeyDown}
-                placeholder="Type or Paste URLs (one per line)..."
-                className="w-full bg-transparent border-none whitespace-nowrap text-nowrap placeholder:text-[12px] sm:text-4 text-white text-lg placeholder:text-gray-600 px-2 py-3 focus:ring-0 focus:outline-none resize-none scrollbar-hide"
+                placeholder={error && !isAliasError ? error : "Type or Paste URLs (one per line)..."} 
+                className={`w-full bg-transparent border-none text-white text-sm sm:text-lg placeholder:text-gray-600 px-3 py-2 focus:ring-0 focus:outline-none resize-none max-h-48 scrollbar-hide placeholder:whitespace-nowrap placeholder:text-[11px] sm:placeholder:text-base ${error && !isAliasError ? 'placeholder:text-red-400 text-red-200' : ''}`}
                 rows={1}
                 disabled={loading}
                 autoFocus
@@ -241,7 +270,7 @@ export default function ChatInterface() {
               <button
                 type="submit"
                 disabled={!inputUrl || loading}
-                className={`p-2 rounded-xl transition-all duration-300 flex items-center justify-center mb-1 ${inputUrl ? 'bg-white text-black shadow-lg shadow-white/10' : 'bg-gray-900 text-gray-600'}`}
+                className={`p-2 rounded-xl transition-all duration-300 flex items-center justify-center ${inputUrl ? 'bg-white text-black shadow-lg shadow-white/10' : 'bg-gray-900 text-gray-600'}`}
               >
                 <ArrowUp size={20} strokeWidth={3} />
               </button>
