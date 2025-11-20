@@ -200,7 +200,7 @@ export default function ChatInterface() {
 
             {/* Main Input Bar */}
              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-2xl blur-sm opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
-            <div className="relative bg-[#111] border border-gray-800 group-focus-within:border-gray-600 rounded-2xl shadow-2xl flex items-end p-2 transition-all duration-300">
+            <div className="relative bg-[#111] border border-gray-800 group-focus-within:border-gray-600 rounded-2xl shadow-2xl flex items-end transition-all duration-300">
               
               {/* --- NEW: New Chat Button (Left of Text Area) --- */}
               <button
@@ -232,7 +232,7 @@ export default function ChatInterface() {
                 onChange={(e) => setInputUrl(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type or Paste URLs (one per line)..."
-                className="w-full bg-transparent border-none whitespace-nowrap text-nowrap text-[12px] sm:text-4 text-white text-lg placeholder:text-gray-600 px-2 py-3 focus:ring-0 focus:outline-none resize-none scrollbar-hide"
+                className="w-full bg-transparent border-none whitespace-nowrap text-nowrap placeholder:text-[12px] sm:text-4 text-white text-lg placeholder:text-gray-600 px-2 py-3 focus:ring-0 focus:outline-none resize-none scrollbar-hide"
                 rows={1}
                 disabled={loading}
                 autoFocus
